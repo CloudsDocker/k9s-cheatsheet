@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>k9s — The Field Guide</title>
+  <meta name="description" content="A direct, practical cheatsheet for the k9s Kubernetes CLI. Navigate, inspect, and manage clusters at the speed of keystrokes." />
+  <meta property="og:title" content="k9s — The Field Guide" />
+  <meta property="og:description" content="A direct, practical cheatsheet for the k9s Kubernetes CLI." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;0,800;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f0e0c;
+      --bg-elev: #171512;
+      --bg-elev-2: #1d1a16;
+      --line: #2a2620;
+      --line-bright: #3a342c;
+      --ink: #ece8de;
+      --ink-dim: #9a9285;
+      --ink-faint: #615a50;
+      --amber: #f5a524;
+      --amber-soft: #c78418;
+      --rust: #d36b2d;
+      --sage: #7ca982;
+      --rose: #d8896a;
+      --shadow: 0 1px 0 rgba(255,255,255,0.04), 0 12px 32px -16px rgba(0,0,0,0.6);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 14px;
+      line-height: 1.55;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      background-image:
+        radial-gradient(ellipse 800px 400px at 20% -10%, rgba(245, 165, 36, 0.06), transparent 60%),
+        radial-gradient(ellipse 600px 300px at 100% 20%, rgba(211, 107, 45, 0.04), transparent 70%);
+      background-attachment: fixed;
+    }
+
+    /* Subtle scanline atmosphere */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.008) 0px,
+        rgba(255, 255, 255, 0.008) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ============ HEADER ============ */
+    header.hero {
+      padding: 80px 0 48px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--amber);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-mark::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--amber);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--amber);
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .meta-line {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    h1.title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(56px, 11vw, 128px);
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+      margin-bottom: 20px;
+      color: var(--ink);
+    }
+
+    h1.title .slash {
+      color: var(--amber);
+      font-weight: 300;
+    }
+
+    .tagline {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-style: italic;
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: 400;
+      color: var(--ink-dim);
+      margin-bottom: 32px;
+      max-width: 680px;
+      line-height: 1.3;
+    }
+
+    .tagline em {
+      font-style: normal;
+      color: var(--amber);
+    }
+
+    .hero-desc {
+      max-width: 620px;
+      color: var(--ink-dim);
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    /* Search bar */
+    .search-wrap {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 800px 400px at 20% -10%, rgba(245, 165, 36, 0.06), transparent 60%);
+      padding: 20px 0;
+      margin: 0 -24px;
+      padding-left: 24px;
+      padding-right: 24px;
+      border-bottom: 1px solid var(--line);
+      z-index: 50;
+      backdrop-filter: blur(8px);
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 10px 14px;
+      transition: border-color 0.15s;
+    }
+
+    .search:focus-within {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 3px rgba(245, 165, 36, 0.08);
+    }
+
+    .search-prompt {
+      color: var(--amber);
+      font-weight: 700;
+      user-select: none;
+    }
+
+    .search input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+      flex: 1;
+      caret-color: var(--amber);
+    }
+
+    .search input::placeholder {
+      color: var(--ink-faint);
+    }
+
+    .search-hint {
+      font-size: 11px;
+      color: var(--ink-faint);
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .search-count {
+      color: var(--amber);
+      font-weight: 500;
+    }
+
+    /* ============ QUICKSTART ============ */
+    .quickstart {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0;
+      margin-top: 40px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .qs-cell {
+      padding: 20px 22px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: var(--bg-elev);
+    }
+
+    .qs-cell:last-child { border-right: none; }
+
+    .qs-label {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 10px;
+    }
+
+    .qs-value {
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .qs-value .amber { color: var(--amber); }
+
+    /* ============ TOC ============ */
+    nav.toc {
+      padding: 48px 0 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .toc-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 20px;
+    }
+
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 4px 24px;
+    }
+
+    .toc-item {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      padding: 8px 0;
+      color: var(--ink-dim);
+      text-decoration: none;
+      font-size: 13px;
+      border-bottom: 1px dotted transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .toc-item:hover {
+      color: var(--amber);
+      border-bottom-color: var(--line-bright);
+    }
+
+    .toc-num {
+      color: var(--amber);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      min-width: 28px;
+    }
+
+    /* ============ SECTIONS ============ */
+    main { padding: 32px 0 80px; }
+
+    section.chapter {
+      padding: 48px 0;
+      border-bottom: 1px solid var(--line);
+      scroll-margin-top: 80px;
+    }
+
+    section.chapter:last-child { border-bottom: none; }
+
+    .chapter-header {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px dashed var(--line);
+    }
+
+    .chapter-num {
+      font-size: 52px;
+      font-weight: 300;
+      color: var(--amber);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chapter-title-group h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .chapter-subtitle {
+      font-size: 12px;
+      color: var(--ink-faint);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ============ COMMAND ROWS ============ */
+    .cmd-list {
+      list-style: none;
+    }
+
+    .cmd-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 260px) 1fr;
+      gap: 24px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+      align-items: baseline;
+      transition: background-color 0.15s;
+    }
+
+    .cmd-row:last-child { border-bottom: none; }
+
+    .cmd-row:hover {
+      background: linear-gradient(90deg, rgba(245, 165, 36, 0.03), transparent 50%);
+    }
+
+    .cmd-row.hidden { display: none; }
+
+    .cmd-keys {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    kbd {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 9px;
+      background: var(--bg-elev-2);
+      border: 1px solid var(--line-bright);
+      border-bottom-width: 2px;
+      border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink);
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.3);
+      white-space: nowrap;
+    }
+
+    kbd.mod {
+      color: var(--amber);
+      border-color: var(--amber-soft);
+    }
+
+    kbd.cmd {
+      background: var(--bg);
+      color: var(--sage);
+      border-color: var(--line-bright);
+      font-style: normal;
+    }
+
+    kbd.danger {
+      color: var(--rose);
+      border-color: #55342a;
+    }
+
+    .cmd-sep {
+      color: var(--ink-faint);
+      font-size: 11px;
+      padding: 0 2px;
+    }
+
+    .cmd-desc {
+      color: var(--ink-dim);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .cmd-desc strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .cmd-desc .tag {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 1px 6px;
+      margin-left: 8px;
+      border-radius: 2px;
+      background: rgba(216, 137, 106, 0.15);
+      color: var(--rose);
+      border: 1px solid rgba(216, 137, 106, 0.3);
+      vertical-align: middle;
+    }
+
+    .cmd-desc .tag.tip {
+      background: rgba(124, 169, 130, 0.12);
+      color: var(--sage);
+      border-color: rgba(124, 169, 130, 0.3);
+    }
+
+    .cmd-desc code {
+      background: var(--bg-elev);
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-size: 12px;
+      color: var(--amber);
+      border: 1px solid var(--line);
+    }
+
+    /* ============ CALLOUT ============ */
+    .callout {
+      margin: 24px 0;
+      padding: 20px 24px;
+      background: var(--bg-elev);
+      border-left: 3px solid var(--amber);
+      border-radius: 0 4px 4px 0;
+      position: relative;
+    }
+
+    .callout-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .callout-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--line-bright), transparent);
+    }
+
+    .callout p {
+      color: var(--ink-dim);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .callout code {
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 2px;
+      color: var(--amber);
+      font-size: 12px;
+      border: 1px solid var(--line);
+    }
+
+    /* ============ WORKFLOWS ============ */
+    .workflow {
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .workflow-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .workflow-goal {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-bottom: 14px;
+      font-style: italic;
+    }
+
+    .workflow-steps {
+      list-style: none;
+      counter-reset: step;
+    }
+
+    .workflow-steps li {
+      position: relative;
+      padding: 8px 0 8px 36px;
+      color: var(--ink-dim);
+      font-size: 13px;
+      counter-increment: step;
+      border-bottom: 1px dotted var(--line);
+    }
+
+    .workflow-steps li:last-child { border-bottom: none; }
+
+    .workflow-steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 24px;
+      height: 24px;
+      background: var(--bg);
+      border: 1px solid var(--line-bright);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--amber);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .workflow-steps kbd {
+      font-size: 11px;
+      padding: 2px 6px;
+    }
+
+    /* ============ EMPTY STATE ============ */
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--ink-faint);
+      display: none;
+    }
+
+    .empty-state.show { display: block; }
+
+    .empty-state-title {
+      color: var(--amber);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .chapter.hidden { display: none; }
+
+    /* ============ FOOTER ============ */
+    footer {
+      padding: 48px 0 64px;
+      border-top: 1px solid var(--line);
+      color: var(--ink-faint);
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    footer a {
+      color: var(--ink-dim);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--line-bright);
+      transition: color 0.15s;
+    }
+
+    footer a:hover {
+      color: var(--amber);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (max-width: 700px) {
+      .container { padding: 0 16px; }
+      header.hero { padding: 48px 0 32px; }
+      .cmd-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 16px 0;
+      }
+      .chapter-header {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .chapter-num { font-size: 36px; }
+      .search-wrap { padding: 16px; margin: 0 -16px; }
+    }
+
+    /* ============ PRINT ============ */
+    @media print {
+      body { background: white; color: black; }
+      body::before { display: none; }
+      .search-wrap, footer, .quickstart { display: none; }
+      kbd { border: 1px solid #666; color: black; background: white; }
+      .chapter { page-break-inside: avoid; break-inside: avoid; }
+      h1.title, .tagline { color: black !important; }
+      h1.title .slash, .chapter-num, .amber { color: #c78418 !important; }
+    }
+
+    /* Text selection */
+    ::selection {
+      background: var(--amber);
+      color: var(--bg);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--line-bright); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--amber-soft); }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="hero-top">
+      <div class="brand-mark">k9s field guide</div>
+      <div class="meta-line">v1 · maintained</div>
+    </div>
+
+    <h1 class="title">k9s<span class="slash">/</span>cheat</h1>
+    <p class="tagline">
+      Navigate, inspect, and manage Kubernetes <em>at the speed of keystrokes.</em>
+    </p>
+    <p class="hero-desc">
+      k9s is a terminal UI for Kubernetes. This guide collects the commands, jumps,
+      and workflows worth memorising — organised for fast lookup, not for reading
+      front-to-back. Use the search below to jump to any key or verb.
+    </p>
+
+    <div class="quickstart">
+      <div class="qs-cell">
+        <div class="qs-label">Install · macOS</div>
+        <div class="qs-value"><span class="amber">$</span> brew install k9s</div>
+      </div>
+      <div class="qs-cell">
+        <div class="qs-label">Install · Windows</div>
+        <div class="qs-value"><span class="amber">$</span> scoop install k9s</div>
+      </div>
+      <div class="qs-cell">
+        <div class="qs-label">Launch</div>
+        <div class="qs-value"><span class="amber">$</span> k9s</div>
+      </div>
+      <div class="qs-cell">
+        <div class="qs-label">Config paths</div>
+        <div class="qs-value"><span class="amber">$</span> k9s info</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ SEARCH ============ -->
+  <div class="search-wrap">
+    <div class="search">
+      <span class="search-prompt">:</span>
+      <input id="search" type="text" placeholder="filter commands — try 'logs', 'port-forward', 'namespace'…" autocomplete="off" spellcheck="false" />
+      <span class="search-hint"><span id="count" class="search-count">—</span> matches</span>
+    </div>
+  </div>
+
+  <div class="empty-state" id="empty">
+    <div class="empty-state-title">no matches</div>
+    <div>try a different term — or press <kbd>esc</kbd> to clear</div>
+  </div>
+
+  <!-- ============ TOC ============ -->
+  <nav class="toc">
+    <div class="toc-label">Contents</div>
+    <div class="toc-grid">
+      <a href="#launch" class="toc-item"><span class="toc-num">01</span> Launch &amp; flags</a>
+      <a href="#navigate" class="toc-item"><span class="toc-num">02</span> Universal navigation</a>
+      <a href="#jump" class="toc-item"><span class="toc-num">03</span> Jump to resources</a>
+      <a href="#actions" class="toc-item"><span class="toc-num">04</span> Resource actions</a>
+      <a href="#logs" class="toc-item"><span class="toc-num">05</span> Logs viewer</a>
+      <a href="#filter" class="toc-item"><span class="toc-num">06</span> Filter &amp; sort</a>
+      <a href="#ns-ctx" class="toc-item"><span class="toc-num">07</span> Namespaces &amp; contexts</a>
+      <a href="#portfwd" class="toc-item"><span class="toc-num">08</span> Port forwarding</a>
+      <a href="#cluster" class="toc-item"><span class="toc-num">09</span> Cluster tools</a>
+      <a href="#config" class="toc-item"><span class="toc-num">10</span> Config &amp; paths</a>
+      <a href="#workflows" class="toc-item"><span class="toc-num">11</span> Everyday workflows</a>
+      <a href="#gotchas" class="toc-item"><span class="toc-num">12</span> Gotchas &amp; tips</a>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ============ 01 LAUNCH ============ -->
+    <section class="chapter" id="launch" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">01</div>
+        <div class="chapter-title-group">
+          <h2>Launch &amp; flags</h2>
+          <div class="chapter-subtitle">starting k9s the right way</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s</kbd></div><div class="cmd-desc">Launch k9s using your current kubeconfig context.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s -n NS</kbd></div><div class="cmd-desc">Start in a specific <strong>namespace</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s -c CTX</kbd></div><div class="cmd-desc">Start with a specific <strong>context</strong> from kubeconfig.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s --context NAME</kbd></div><div class="cmd-desc">Longer form of <code>-c</code>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s --readonly</kbd></div><div class="cmd-desc">Launch in read-only mode. Disables edits, deletes, exec. <span class="tag tip">prod-safe</span></div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s --headless</kbd></div><div class="cmd-desc">Hide the top-status header for more screen real estate.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s --logoless</kbd></div><div class="cmd-desc">Hide the k9s logo.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s --crumbsless</kbd></div><div class="cmd-desc">Hide the breadcrumb trail at the bottom.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s -A</kbd></div><div class="cmd-desc">Launch viewing <strong>all namespaces</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s -r 3</kbd></div><div class="cmd-desc">Set refresh rate (seconds). Default is 2.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s --kubeconfig PATH</kbd></div><div class="cmd-desc">Use a specific kubeconfig file.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s info</kbd></div><div class="cmd-desc">Print version and paths (config, logs, plugins, skins).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s version</kbd></div><div class="cmd-desc">Print version only.</div></li>
+      </ul>
+    </section>
+
+    <!-- ============ 02 NAVIGATION ============ -->
+    <section class="chapter" id="navigate" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">02</div>
+        <div class="chapter-title-group">
+          <h2>Universal navigation</h2>
+          <div class="chapter-subtitle">these work almost everywhere in the app</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:</kbd></div><div class="cmd-desc">Enter <strong>command mode</strong>. Type a resource alias (<code>pod</code>, <code>svc</code>, <code>ctx</code>…) then <kbd>Enter</kbd>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>/</kbd></div><div class="cmd-desc">Enter <strong>filter mode</strong> for the current view.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>?</kbd></div><div class="cmd-desc">Show the <strong>help panel</strong> with keys available in the current view.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd>a</kbd></div><div class="cmd-desc">Show <strong>all aliases</strong> — every resource shortcut k9s knows.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>Esc</kbd></div><div class="cmd-desc">Close a menu / cancel filter / go back one view.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>Enter</kbd></div><div class="cmd-desc">Drill into the selected row (e.g. pod → containers).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>Tab</kbd></div><div class="cmd-desc">Move between panes in multi-pane views.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>↑</kbd><span class="cmd-sep">/</span><kbd>↓</kbd> <kbd>j</kbd><span class="cmd-sep">/</span><kbd>k</kbd></div><div class="cmd-desc">Move selection up and down (vim-style works too).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>PgUp</kbd><span class="cmd-sep">/</span><kbd>PgDn</kbd></div><div class="cmd-desc">Page through long lists.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>g</kbd><span class="cmd-sep">·</span><kbd>G</kbd></div><div class="cmd-desc">Jump to <strong>top</strong> / <strong>bottom</strong> of the list.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:q</kbd> <span class="cmd-sep">·</span> <kbd>:quit</kbd> <span class="cmd-sep">·</span> <kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd>c</kbd></div><div class="cmd-desc">Quit k9s.</div></li>
+      </ul>
+    </section>
+
+    <!-- ============ 03 JUMP TO RESOURCES ============ -->
+    <section class="chapter" id="jump" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">03</div>
+        <div class="chapter-title-group">
+          <h2>Jump to resources</h2>
+          <div class="chapter-subtitle">type <code style="color:var(--amber)">:</code> then the alias, then <code style="color:var(--amber)">Enter</code></div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:pod</kbd> <span class="cmd-sep">·</span> <kbd>:po</kbd></div><div class="cmd-desc">Pods.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:deploy</kbd> <span class="cmd-sep">·</span> <kbd>:dp</kbd></div><div class="cmd-desc">Deployments.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:svc</kbd></div><div class="cmd-desc">Services.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:ing</kbd></div><div class="cmd-desc">Ingresses.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:ns</kbd></div><div class="cmd-desc">Namespaces.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:node</kbd> <span class="cmd-sep">·</span> <kbd>:no</kbd></div><div class="cmd-desc">Nodes.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:cm</kbd></div><div class="cmd-desc">ConfigMaps.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:sec</kbd></div><div class="cmd-desc">Secrets (values are base64 — press <kbd>x</kbd> to decode).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:pvc</kbd> <span class="cmd-sep">·</span> <kbd>:pv</kbd></div><div class="cmd-desc">Persistent volume claims / volumes.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:sts</kbd></div><div class="cmd-desc">StatefulSets.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:ds</kbd></div><div class="cmd-desc">DaemonSets.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:rs</kbd></div><div class="cmd-desc">ReplicaSets.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:job</kbd> <span class="cmd-sep">·</span> <kbd>:cj</kbd></div><div class="cmd-desc">Jobs / CronJobs.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:sa</kbd></div><div class="cmd-desc">ServiceAccounts.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:role</kbd> <span class="cmd-sep">·</span> <kbd>:rb</kbd> <span class="cmd-sep">·</span> <kbd>:crb</kbd></div><div class="cmd-desc">Roles, RoleBindings, ClusterRoleBindings.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:events</kbd> <span class="cmd-sep">·</span> <kbd>:ev</kbd></div><div class="cmd-desc">Events across the cluster — watch here when things break. <span class="tag tip">debug</span></div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:ctx</kbd></div><div class="cmd-desc">Switch kubeconfig context without leaving k9s.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:helm</kbd></div><div class="cmd-desc">Helm releases. <kbd>Enter</kbd> to see revision history.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:pf</kbd></div><div class="cmd-desc">Active port-forwards managed by this k9s session.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:screendump</kbd> <span class="cmd-sep">·</span> <kbd>:sd</kbd></div><div class="cmd-desc">Dump current cluster state (YAMLs) to disk for offline review.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:alias</kbd></div><div class="cmd-desc">Full aliases list — same as <kbd class="mod">Ctrl</kbd>+<kbd>a</kbd>.</div></li>
+      </ul>
+
+      <div class="callout">
+        <div class="callout-label">tip · fuzzy jumping</div>
+        <p>You can jump directly to a single resource: <code>:pod mypod-abc123</code> opens that pod view.
+           You can also combine namespace + resource: <code>:pod production</code> filters pods to the <code>production</code> namespace.</p>
+      </div>
+    </section>
+
+    <!-- ============ 04 ACTIONS ============ -->
+    <section class="chapter" id="actions" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">04</div>
+        <div class="chapter-title-group">
+          <h2>Resource actions</h2>
+          <div class="chapter-subtitle">with a row highlighted, press…</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>d</kbd></div><div class="cmd-desc"><strong>Describe</strong> — full kubectl-describe output.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>y</kbd></div><div class="cmd-desc">View the resource <strong>YAML</strong> as the API returns it.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>e</kbd></div><div class="cmd-desc"><strong>Edit</strong> — opens YAML in <code>$EDITOR</code>; save to apply.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>l</kbd></div><div class="cmd-desc"><strong>Logs</strong> for a pod (or pod-backed resource).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>p</kbd></div><div class="cmd-desc"><strong>Previous</strong> container logs — the last crash.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>s</kbd></div><div class="cmd-desc"><strong>Shell</strong> into a pod (picks container if multiple).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>a</kbd></div><div class="cmd-desc"><strong>Attach</strong> to a running container's stdin/stdout.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>f</kbd></div><div class="cmd-desc">Show existing port-forwards for this pod / service.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>f</kbd></div><div class="cmd-desc"><strong>Create</strong> a port-forward (prompts for ports).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>r</kbd></div><div class="cmd-desc">On a deployment: <strong>restart rollout</strong> (kubectl rollout restart).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>x</kbd></div><div class="cmd-desc">On secrets: <strong>decode</strong> a value. Elsewhere: resource-specific action.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>t</kbd></div><div class="cmd-desc">On deployments: scale (transition). Prompts for replica count.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>Space</kbd></div><div class="cmd-desc"><strong>Mark</strong> the current row. Multi-select across rows.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd>Space</kbd></div><div class="cmd-desc">Clear all marks.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd class="danger">d</kbd></div><div class="cmd-desc"><strong>Delete</strong> with confirmation. Respects marks — can bulk-delete.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd class="danger">k</kbd></div><div class="cmd-desc"><strong>Kill</strong> — delete without confirm, with <code>--grace-period=0 --force</code>. <span class="tag">danger</span></div></li>
+      </ul>
+    </section>
+
+    <!-- ============ 05 LOGS ============ -->
+    <section class="chapter" id="logs" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">05</div>
+        <div class="chapter-title-group">
+          <h2>Logs viewer</h2>
+          <div class="chapter-subtitle">keys inside the log pane</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>0</kbd></div><div class="cmd-desc">Tail <strong>all lines</strong> (since pod start, follow indefinitely).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>1</kbd> <span class="cmd-sep">…</span> <kbd>5</kbd></div><div class="cmd-desc">Tail the last 1, 10, 100, 1000, 5000 lines respectively.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>f</kbd></div><div class="cmd-desc">Toggle <strong>full screen</strong> logs.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>w</kbd></div><div class="cmd-desc">Toggle line <strong>wrap</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>t</kbd></div><div class="cmd-desc">Toggle <strong>timestamps</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>s</kbd></div><div class="cmd-desc"><strong>Save</strong> current buffer to disk (path printed at top).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>c</kbd></div><div class="cmd-desc"><strong>Copy</strong> current buffer to clipboard.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>m</kbd></div><div class="cmd-desc"><strong>Mark</strong> current position — useful before triggering an event.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>n</kbd> <span class="cmd-sep">·</span> <kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>n</kbd></div><div class="cmd-desc">Jump to next / previous mark.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>c</kbd></div><div class="cmd-desc">Clear the log buffer (display only; underlying logs remain).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd>s</kbd></div><div class="cmd-desc">Toggle autoscroll.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>/</kbd></div><div class="cmd-desc">Filter log lines (regex supported).</div></li>
+      </ul>
+    </section>
+
+    <!-- ============ 06 FILTER & SORT ============ -->
+    <section class="chapter" id="filter" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">06</div>
+        <div class="chapter-title-group">
+          <h2>Filter &amp; sort</h2>
+          <div class="chapter-subtitle">narrow the list, then order it</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>/text</kbd></div><div class="cmd-desc">Filter rows that <strong>contain</strong> "text".</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>/!text</kbd></div><div class="cmd-desc"><strong>Inverse</strong> filter — exclude rows matching "text".</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>/-l app=web</kbd></div><div class="cmd-desc">Filter by <strong>label selector</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>/-f status.phase=Running</kbd></div><div class="cmd-desc">Filter by <strong>field selector</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>/ regex</kbd></div><div class="cmd-desc">Regex works too (e.g. <code>/api-.*-prod</code>).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>n</kbd></div><div class="cmd-desc">Sort by <strong>name</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>a</kbd></div><div class="cmd-desc">Sort by <strong>age</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>s</kbd></div><div class="cmd-desc">Sort by <strong>status</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>r</kbd></div><div class="cmd-desc">Sort by <strong>ready</strong> state.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>c</kbd></div><div class="cmd-desc">Sort by <strong>CPU</strong> usage (requires metrics-server).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>m</kbd></div><div class="cmd-desc">Sort by <strong>memory</strong> usage.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>i</kbd></div><div class="cmd-desc">Sort by <strong>IP</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>o</kbd></div><div class="cmd-desc">Sort pods by <strong>node</strong> — handy for noisy-neighbour hunting.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>0</kbd></div><div class="cmd-desc">In a namespaced view: show <strong>all namespaces</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>1</kbd> <span class="cmd-sep">…</span> <kbd>9</kbd></div><div class="cmd-desc">Jump to your <strong>favourite</strong> namespace (configured via <kbd>:ns</kbd> then <kbd>Ctrl</kbd>+<kbd>s</kbd>).</div></li>
+      </ul>
+    </section>
+
+    <!-- ============ 07 NAMESPACES & CONTEXTS ============ -->
+    <section class="chapter" id="ns-ctx" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">07</div>
+        <div class="chapter-title-group">
+          <h2>Namespaces &amp; contexts</h2>
+          <div class="chapter-subtitle">switching realms without leaving the app</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:ns</kbd></div><div class="cmd-desc">Open namespace list. <kbd>Enter</kbd> to switch to one.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd>s</kbd></div><div class="cmd-desc">In namespace view: <strong>favourite</strong> the selected namespace. Accessible by digit keys thereafter.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>u</kbd></div><div class="cmd-desc">In namespace view: <strong>unfavourite</strong>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:ctx</kbd></div><div class="cmd-desc">List kubeconfig contexts. <kbd>Enter</kbd> to switch — faster than <code>kubectl config use-context</code>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>0</kbd></div><div class="cmd-desc">View <strong>all namespaces</strong> (any resource list).</div></li>
+      </ul>
+    </section>
+
+    <!-- ============ 08 PORT FORWARD ============ -->
+    <section class="chapter" id="portfwd" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">08</div>
+        <div class="chapter-title-group">
+          <h2>Port forwarding</h2>
+          <div class="chapter-subtitle">local ports tunnelled to cluster resources</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Shift</kbd><span class="cmd-sep">+</span><kbd>f</kbd></div><div class="cmd-desc">Create a port-forward on the selected pod or service. Prompts for local:container ports.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:pf</kbd></div><div class="cmd-desc">List <strong>active</strong> port-forwards managed by this k9s process.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd>b</kbd></div><div class="cmd-desc">On a forward: open the URL in the default browser.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd class="danger">d</kbd></div><div class="cmd-desc">Delete / stop the selected forward.</div></li>
+      </ul>
+      <div class="callout">
+        <div class="callout-label">note · forward lifetime</div>
+        <p>Port-forwards live only as long as the k9s process. Quit k9s and the tunnels close — same as <code>kubectl port-forward</code>.</p>
+      </div>
+    </section>
+
+    <!-- ============ 09 CLUSTER TOOLS ============ -->
+    <section class="chapter" id="cluster" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">09</div>
+        <div class="chapter-title-group">
+          <h2>Cluster tools</h2>
+          <div class="chapter-subtitle">higher-order views</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:pulse</kbd></div><div class="cmd-desc">Cluster <strong>health dashboard</strong> — resource counts, usage, node status at a glance.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:popeye</kbd></div><div class="cmd-desc">Run <strong>Popeye</strong> — a cluster sanitizer that flags misconfigurations and best-practice violations. <span class="tag tip">must-try</span></div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:xray RESOURCE</kbd></div><div class="cmd-desc">Visualise resource <strong>dependency tree</strong>. Example: <code>:xray deployment</code>. Drill into pods, services, configmaps, secrets they depend on.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:dir PATH</kbd></div><div class="cmd-desc">Browse and apply YAML manifests from a <strong>local directory</strong> (dry-run or apply).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:benchmark</kbd> <span class="cmd-sep">·</span> <kbd>:be</kbd></div><div class="cmd-desc">Run / inspect benchmarks configured in <code>bench-&lt;context&gt;.yaml</code>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:plugins</kbd></div><div class="cmd-desc">List configured plugins (extra key bindings you've defined).</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:skins</kbd></div><div class="cmd-desc">List available skins. Useful to visually distinguish prod vs dev clusters.</div></li>
+      </ul>
+    </section>
+
+    <!-- ============ 10 CONFIG ============ -->
+    <section class="chapter" id="config" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">10</div>
+        <div class="chapter-title-group">
+          <h2>Config &amp; paths</h2>
+          <div class="chapter-subtitle">where k9s stores its brain</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">k9s info</kbd></div><div class="cmd-desc">Prints exact paths on your system (works cross-platform). Run this first.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">config.yaml</kbd></div><div class="cmd-desc">Global settings: refresh rate, default namespace, UI toggles.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">aliases.yaml</kbd></div><div class="cmd-desc">Custom resource aliases. Add your own: e.g. <code>pp: v1/pods</code>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">hotkeys.yaml</kbd></div><div class="cmd-desc">Global key bindings. Map e.g. <kbd>Shift</kbd>+<kbd>x</kbd> to jump to a favourite resource.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">plugins.yaml</kbd></div><div class="cmd-desc">Per-view commands that shell out to scripts. E.g. <kbd>Shift</kbd>+<kbd>k</kbd> on a pod to run a custom diagnostic.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">skins/*.yaml</kbd></div><div class="cmd-desc">Per-cluster colour themes. Reference by context name in config to auto-apply.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">~/.config/k9s</kbd></div><div class="cmd-desc">Linux / XDG default location.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">~/Library/Application Support/k9s</kbd></div><div class="cmd-desc">macOS default location.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">%LOCALAPPDATA%\k9s</kbd></div><div class="cmd-desc">Windows default location.</div></li>
+      </ul>
+
+      <div class="callout">
+        <div class="callout-label">tip · prod-safe skins</div>
+        <p>Make production red. Drop a <code>prod.yaml</code> skin with alarming colours in <code>skins/</code>, then reference it by context in <code>config.yaml</code>. You'll never confuse prod and dev again.</p>
+      </div>
+    </section>
+
+    <!-- ============ 11 WORKFLOWS ============ -->
+    <section class="chapter" id="workflows" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">11</div>
+        <div class="chapter-title-group">
+          <h2>Everyday workflows</h2>
+          <div class="chapter-subtitle">the sequences you'll run daily</div>
+        </div>
+      </div>
+
+      <div class="workflow" data-cmd>
+        <div class="workflow-title">Tail logs from a specific pod</div>
+        <div class="workflow-goal">Goal: follow a running pod's logs, filtered to errors.</div>
+        <ol class="workflow-steps">
+          <li><kbd>:pod</kbd> <kbd>Enter</kbd> — open the pod list.</li>
+          <li><kbd>/</kbd>, type part of the pod name, <kbd>Enter</kbd> — filter.</li>
+          <li><kbd>l</kbd> — open logs.</li>
+          <li><kbd>0</kbd> — tail indefinitely from pod start.</li>
+          <li><kbd>/</kbd> <kbd>error</kbd> <kbd>Enter</kbd> — filter to error lines.</li>
+        </ol>
+      </div>
+
+      <div class="workflow" data-cmd>
+        <div class="workflow-title">Exec into a pod</div>
+        <div class="workflow-goal">Goal: get a shell in a running container.</div>
+        <ol class="workflow-steps">
+          <li><kbd>:pod</kbd> <kbd>Enter</kbd>.</li>
+          <li>Highlight the pod row.</li>
+          <li><kbd>s</kbd> — if multiple containers, select one.</li>
+          <li>Exit with <kbd>Ctrl</kbd>+<kbd>d</kbd> or <kbd>exit</kbd>.</li>
+        </ol>
+      </div>
+
+      <div class="workflow" data-cmd>
+        <div class="workflow-title">Port-forward a service to localhost</div>
+        <div class="workflow-goal">Goal: hit an in-cluster service from your laptop.</div>
+        <ol class="workflow-steps">
+          <li><kbd>:svc</kbd> <kbd>Enter</kbd>.</li>
+          <li>Highlight the service row.</li>
+          <li><kbd>Shift</kbd>+<kbd>f</kbd> — prompts for local port.</li>
+          <li>Accept defaults or type <code>8080:80</code>. <kbd>Enter</kbd>.</li>
+          <li><kbd>:pf</kbd> to confirm it's live.</li>
+        </ol>
+      </div>
+
+      <div class="workflow" data-cmd>
+        <div class="workflow-title">Edit a ConfigMap and roll the deployment</div>
+        <div class="workflow-goal">Goal: change config and make pods pick it up.</div>
+        <ol class="workflow-steps">
+          <li><kbd>:cm</kbd> <kbd>Enter</kbd>, select your ConfigMap.</li>
+          <li><kbd>e</kbd> — edit in your editor. Save.</li>
+          <li><kbd>:deploy</kbd> <kbd>Enter</kbd>, select the consuming deployment.</li>
+          <li><kbd>r</kbd> — restart rollout.</li>
+        </ol>
+      </div>
+
+      <div class="workflow" data-cmd>
+        <div class="workflow-title">Find what's failing right now</div>
+        <div class="workflow-goal">Goal: triage after a deploy or outage.</div>
+        <ol class="workflow-steps">
+          <li><kbd>:ev</kbd> <kbd>Enter</kbd> — watch cluster events.</li>
+          <li><kbd>Shift</kbd>+<kbd>a</kbd> — sort by age (newest first).</li>
+          <li><kbd>/</kbd> <kbd>Warning</kbd> — filter to warnings/errors.</li>
+          <li><kbd>:pulse</kbd> to correlate with overall cluster health.</li>
+        </ol>
+      </div>
+
+      <div class="workflow" data-cmd>
+        <div class="workflow-title">Decode a secret value</div>
+        <div class="workflow-goal">Goal: read a base64 secret without shell gymnastics.</div>
+        <ol class="workflow-steps">
+          <li><kbd>:sec</kbd> <kbd>Enter</kbd>.</li>
+          <li>Highlight the secret, <kbd>Enter</kbd> to open.</li>
+          <li><kbd>x</kbd> on the selected key — decoded in-place.</li>
+        </ol>
+      </div>
+
+      <div class="workflow" data-cmd>
+        <div class="workflow-title">Bulk-delete stuck pods</div>
+        <div class="workflow-goal">Goal: remove many pods in one go.</div>
+        <ol class="workflow-steps">
+          <li><kbd>:pod</kbd> <kbd>Enter</kbd>.</li>
+          <li><kbd>/</kbd> filter to the target pods.</li>
+          <li><kbd>Space</kbd> on each to mark.</li>
+          <li><kbd>Ctrl</kbd>+<kbd>d</kbd> to delete with confirm — or <kbd>Ctrl</kbd>+<kbd>k</kbd> to force-kill.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ 12 GOTCHAS ============ -->
+    <section class="chapter" id="gotchas" data-section>
+      <div class="chapter-header">
+        <div class="chapter-num">12</div>
+        <div class="chapter-title-group">
+          <h2>Gotchas &amp; tips</h2>
+          <div class="chapter-subtitle">the stuff that only shows up after hours of use</div>
+        </div>
+      </div>
+      <ul class="cmd-list">
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd class="danger">k</kbd> vs <kbd class="mod">Ctrl</kbd><span class="cmd-sep">+</span><kbd class="danger">d</kbd></div><div class="cmd-desc"><code>Ctrl+k</code> is force-kill <em>without confirmation</em>. <code>Ctrl+d</code> asks first. Muscle memory matters. <span class="tag">danger</span></div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd class="cmd">--readonly</kbd></div><div class="cmd-desc">Run prod clusters read-only. A single flag prevents a career-ending keystroke. <span class="tag tip">habit</span></div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>0</kbd> in lists</div><div class="cmd-desc"><code>0</code> means "all namespaces" in resource lists — and "tail all" in log views. Context-sensitive.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>Space</kbd> is sticky</div><div class="cmd-desc">Marks persist across filter changes. If you're getting unexpected bulk-deletes, <kbd>Ctrl</kbd>+<kbd>Space</kbd> clears all marks.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys">Metrics missing</div><div class="cmd-desc">CPU / memory columns require <strong>metrics-server</strong> installed in the cluster. Otherwise you'll see dashes.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys">Edit uses <code>$EDITOR</code></div><div class="cmd-desc">Set it to something you know: <code>export EDITOR=nvim</code>. Default may drop you in <code>vi</code>.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys"><kbd>:xray</kbd> with RBAC</div><div class="cmd-desc">If xray shows empty trees, you probably lack RBAC for referenced resources — not a k9s bug.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys">Screen dumps</div><div class="cmd-desc"><code>:sd</code> writes YAML per resource to disk — great for "what did the cluster look like 20 minutes ago" post-mortems.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys">Helm rollback</div><div class="cmd-desc">In <code>:helm</code>, <kbd>Enter</kbd> shows revision history, then select a revision and <kbd>u</kbd> to roll back.</div></li>
+        <li class="cmd-row" data-cmd><div class="cmd-keys">Favourites work globally</div><div class="cmd-desc">Favourite a namespace once with <kbd>Ctrl</kbd>+<kbd>s</kbd>, then digit keys <kbd>1</kbd>–<kbd>9</kbd> switch to it from anywhere.</div></li>
+      </ul>
+    </section>
+
+  </main>
+
+  <footer>
+    <div>k9s field guide · print-friendly · search-enabled</div>
+    <div class="footer-links">
+      <a href="https://k9scli.io" target="_blank" rel="noopener">k9scli.io</a>
+      <a href="https://github.com/derailed/k9s" target="_blank" rel="noopener">github/derailed/k9s</a>
+      <a href="https://kubernetes.io/docs/" target="_blank" rel="noopener">kubernetes.io</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // ============ LIVE SEARCH ============
+  const input = document.getElementById('search');
+  const count = document.getElementById('count');
+  const empty = document.getElementById('empty');
+  const rows = document.querySelectorAll('[data-cmd]');
+  const sections = document.querySelectorAll('[data-section]');
+  const totalCount = rows.length;
+
+  const updateCount = () => {
+    count.textContent = String(totalCount).padStart(2, '0');
+  };
+  updateCount();
+
+  const filter = () => {
+    const q = input.value.trim().toLowerCase();
+    if (!q) {
+      rows.forEach(r => r.classList.remove('hidden'));
+      sections.forEach(s => s.classList.remove('hidden'));
+      empty.classList.remove('show');
+      count.textContent = String(totalCount).padStart(2, '0');
+      return;
+    }
+    let matches = 0;
+    rows.forEach(r => {
+      const text = r.textContent.toLowerCase();
+      if (text.includes(q)) {
+        r.classList.remove('hidden');
+        matches++;
+      } else {
+        r.classList.add('hidden');
+      }
+    });
+    // Hide sections with no visible rows
+    sections.forEach(s => {
+      const visible = s.querySelectorAll('[data-cmd]:not(.hidden)').length;
+      s.classList.toggle('hidden', visible === 0);
+    });
+    empty.classList.toggle('show', matches === 0);
+    count.textContent = String(matches).padStart(2, '0');
+  };
+
+  input.addEventListener('input', filter);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      input.value = '';
+      filter();
+      input.blur();
+    }
+  });
+
+  // Keyboard shortcut: / focuses search
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== input) {
+      e.preventDefault();
+      input.focus();
+    }
+  });
+</script>
+
+</body>
+</html>
